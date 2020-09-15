@@ -1,5 +1,6 @@
 import express from 'express'
 import path from 'path'
+import axios from 'axios'
 import cors from 'cors'
 import bodyParser from 'body-parser'
 import sockjs from 'sockjs'
@@ -41,6 +42,22 @@ const middleware = [
 
 middleware.forEach((it) => server.use(it))
 
+server.get('/api/v1/users/:name', (req, res) => {
+  const { name } = req.params
+  res.json({ name })
+})
+
+server.get('/api/v1/users/', async (req, res) => {
+  const { data: users } = await axios('https://jsonplaceholder.typicode.com/users')
+  res.json(users)
+})
+
+server.get('/api/v1/users/take/:number', async (req, res) => {
+  const { number } = req.params
+  const { data: users } = await axios('https://jsonplaceholder.typicode.com/users')
+  res.json(users.slice(0, +number))
+})
+
 server.use('/api/', (req, res) => {
   res.status(404)
   res.end()
@@ -80,7 +97,7 @@ if (config.isSocketsEnabled) {
   const echo = sockjs.createServer()
   echo.on('connection', (conn) => {
     connections.push(conn)
-    conn.on('data', async () => {})
+    conn.on('data', async () => { })
 
     conn.on('close', () => {
       connections = connections.filter((c) => c.readyState !== 3)
